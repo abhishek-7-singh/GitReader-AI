@@ -1,5 +1,36 @@
+# Virtual Environment
 .venv/
+venv/
+ENV/
+env/
+
+# Python Cache
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment Variables & Secrets
 .env
+.env.local
+.env.*.local
+
+# Databases & Vector Stores
+*.db
+*.sqlite
+*.sqlite3
 data/
-*.pyc
+
+# Documentation & Specifications (ignored per project configuration)
+docs/
+
+# Uploads & Temporary Stores
+uploads/
+chroma/
+
+# Logs & OS artifacts
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

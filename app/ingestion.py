@@ -16,7 +16,7 @@ from .github import clone_or_pull_github_repo, fetch_local_git_commits
 
 IGNORED_DIRS = {
     ".git", ".venv", "venv", "node_modules", "__pycache__", "dist",
-    "build", ".next", "target", "vendor", ".idea", ".vscode", "coverage"
+    "build", ".next", "target", "vendor", ".idea", ".vscode", "coverage", "data"
 }
 
 ALLOWED_EXTENSIONS = {
@@ -144,8 +144,8 @@ def ingest_repository(name: str, path_or_url: str, branch: Optional[str] = None)
         is_cloned = True
     else:
         root = Path(path_or_url).expanduser().resolve()
-        if not root.is_dir() or not (root / ".git").exists():
-            raise ValueError(f"Path must be an existing local Git repository containing .git: {path_or_url}")
+        if not root.is_dir():
+            raise ValueError(f"Path must be an existing directory: {path_or_url}")
 
     # Get Git HEAD commit SHA
     try:
