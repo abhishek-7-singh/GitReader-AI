@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitReader AI — GitHub Knowledge & Push Intelligence Platform</title>
+  <meta name="description" content="Local-first GitHub repository intelligence assistant: folder trees, developer push logbooks, AI release notes, document parsing, and RAG chatbot with Ollama.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="dark-theme">
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+          <path d="M9 18c-4.51 2-5-2-7-2"></path>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">GitReader AI</h1>
+        <span class="brand-tag">Repository Intelligence & RAG Platform</span>
+      </div>
+    </div>
+
+    <div class="nav-controls">
+      <!-- Active Repository Selector -->
+      <div class="repo-selector-wrapper">
+        <label for="activeRepoSelect" class="selector-label">Repository:</label>
+        <select id="activeRepoSelect" class="styled-select">
+          <option value="">-- Select Repository --</option>
+        </select>
+        <button id="btnSyncRepo" class="btn-icon" title="Sync / Pull latest changes from Git">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Ollama Status Badge -->
+      <div id="ollamaStatusBadge" class="status-badge checking">
+        <span class="status-dot"></span>
+        <span id="ollamaStatusText">Connecting to Ollama...</span>
+      </div>
+
+      <button id="btnOpenIngestModal" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Ingest Repo</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout-body">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="tab-overview">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Dashboard & Repos</span>
+        </button>
+        <button class="nav-item" data-tab="tab-tree">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+          <span>Folder Structure</span>
+        </button>
+        <button class="nav-item" data-tab="tab-logbook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span>Push Logbook</span>
+        </button>
+        <button class="nav-item" data-tab="tab-release-notes">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <span>AI Release Notes</span>
+        </button>
+        <button class="nav-item" data-tab="tab-documents">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          <span>Doc Ingestion</span>
+        </button>
+        <button class="nav-item" data-tab="tab-chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>RAG Chatbot</span>
+        </button>
+        <button class="nav-item" data-tab="tab-webhook">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          <span>Push Simulator</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="model-info">
+          <div class="model-title">Local LLM Stack</div>
+          <div class="model-meta">Chat: <strong id="lblChatModel">qwen2.5-coder:3b</strong></div>
+          <div class="model-meta">Embed: <strong id="lblEmbedModel">nomic-embed-text</strong></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+
+      <!-- TAB 1: OVERVIEW -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="pane-header">
+          <div>
+            <h2 class="pane-title">Workspace Overview</h2>
+            <p class="pane-subtitle">Manage ingested GitHub repositories, inspect code indices, and monitor developer pushes.</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <div>
+              <div class="stat-val" id="statRepoCount">0</div>
+              <div class="stat-label">Active Repositories</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>
+            </div>
+            <div>
+              <div class="stat-val" id="statCommitsCount">0</div>
+              <div class="stat-label">Tracked Commits</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </div>
+            <div>
+              <div class="stat-val" id="statLogbookCount">0</div>
+              <div class="stat-label">Logbook Entries</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon amber">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            </div>
+            <div>
+              <div class="stat-val" id="statDocsCount">0</div>
+              <div class="stat-label">Parsed Documents</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-header">
+            <h3 class="card-title">Tracked Repositories</h3>
+            <span class="card-note">Repositories ready for code intelligence, developer tracking, and RAG</span>
+          </div>
+          <div id="repoListContainer" class="repo-table-wrapper">
+            <div class="empty-state">No repositories indexed yet. Click "Ingest Repo" to get started.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: FOLDER STRUCTURE -->
+      <section id="tab-tree" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2 class="pane-title">Repository Folder Structure</h2>
+            <p class="pane-subtitle">Clean hierarchical file tree and language distribution breakdown.</p>
+          </div>
+          <div class="btn-group">
+            <button id="btnTreeAsciiView" class="btn-secondary active">ASCII Tree</button>
+            <button id="btnTreeVisualView" class="btn-secondary">Interactive View</button>
+          </div>
+        </div>
+
+        <!-- Language Breakdown Badges -->
+        <div id="treeLangContainer" class="lang-distribution-bar"></div>
+
+        <div class="tree-display-container">
+          <pre id="asciiTreeOutput" class="code-terminal">Select a repository to explore its folder structure...</pre>
+          <div id="visualTreeOutput" class="visual-tree-container" style="display:none;"></div>
+        </div>
+      </section>
+
+      <!-- TAB 3: DEVELOPER LOGBOOK -->
+      <section id="tab-logbook" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2 class="pane-title">Developer Push Logbook</h2>
+            <p class="pane-subtitle">Real-time logbook recording every push, author, commit hash, and file diff statistics.</p>
+          </div>
+          <button id="btnRefreshLogbook" class="btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <div id="logbookTimeline" class="timeline-container">
+          <div class="empty-state">No push events recorded yet. Send a push or ingest a repository to see logbook entries.</div>
+        </div>
+      </section>
+
+      <!-- TAB 4: AI RELEASE NOTES -->
+      <section id="tab-release-notes" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2 class="pane-title">AI Release Notes & Changelogs</h2>
+            <p class="pane-subtitle">Synthesize developer commits and push diffs into structured release notes using Ollama Qwen2.5-Coder.</p>
+          </div>
+        </div>
+
+        <div class="generator-bar">
+          <div class="input-inline">
+            <label for="relVersionInput">Release Version:</label>
+            <input type="text" id="relVersionInput" value="v1.0.0" class="styled-input small">
+          </div>
+          <div class="input-inline">
+            <label for="relLimitInput">Commit Count:</label>
+            <input type="number" id="relLimitInput" value="20" min="1" max="100" class="styled-input small">
+          </div>
+          <button id="btnGenerateReleaseNotes" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>Generate with AI</span>
+          </button>
+        </div>
+
+        <div class="release-notes-view">
+          <div class="content-card full-height">
+            <div class="card-header space-between">
+              <h3 class="card-title">Release Notes Output</h3>
+              <button id="btnCopyReleaseNotes" class="btn-secondary small">Copy Markdown</button>
+            </div>
+            <div id="releaseNotesOutput" class="markdown-preview">
+              <p class="text-muted">Click "Generate with AI" above to generate release notes from recent repository commits.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: DOCUMENT INGESTION -->
+      <section id="tab-documents" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2 class="pane-title">Document Parsing & Ingestion</h2>
+            <p class="pane-subtitle">Parse architectural specifications, design docs, and guides (.pdf, .docx, .md, .txt) into RAG vectorstore.</p>
+          </div>
+        </div>
+
+        <div class="upload-zone" id="dropZone">
+          <input type="file" id="fileUploadInput" accept=".pdf,.docx,.md,.txt,.rst" style="display:none;">
+          <div class="upload-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          </div>
+          <div class="upload-title">Drop PDF, DOCX, Markdown, or TXT files here</div>
+          <div class="upload-desc">or click to browse from your computer</div>
+          <button id="btnBrowseFile" class="btn-secondary">Choose File</button>
+        </div>
+
+        <div class="content-card" style="margin-top: 24px;">
+          <div class="card-header">
+            <h3 class="card-title">Parsed Documents</h3>
+          </div>
+          <div id="docsListContainer">
+            <div class="empty-state">No documents uploaded yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: RAG CHATBOT -->
+      <section id="tab-chat" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2 class="pane-title">Repository Intelligence Chatbot</h2>
+            <p class="pane-subtitle">Grounded Q&A over indexed source code, commit history, and uploaded documentation using Ollama.</p>
+          </div>
+        </div>
+
+        <div class="chat-container">
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-bubble bot">
+              <div class="bubble-header">
+                <span class="bot-name">🤖 GitReader AI</span>
+                <span class="bubble-time">Ready</span>
+              </div>
+              <div class="bubble-content">
+                Hello! I am your repository intelligence assistant. You can ask me anything about your ingested code, architecture patterns, commits, or documentation.
+              </div>
+              <div class="chat-suggestions">
+                <button class="suggestion-chip">Explain the overall architecture</button>
+                <button class="suggestion-chip">Where are the database tables defined?</button>
+                <button class="suggestion-chip">What changes were made in the latest push?</button>
+              </div>
+            </div>
+          </div>
+
+          <form id="chatForm" class="chat-input-bar">
+            <input type="text" id="chatInput" placeholder="Ask a question about the repository or documentation..." autocomplete="off">
+            <button type="submit" id="btnSendChat" class="btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <span>Send</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 7: WEBHOOK SIMULATOR -->
+      <section id="tab-webhook" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2 class="pane-title">GitHub Push Webhook Simulator</h2>
+            <p class="pane-subtitle">Test developer push events, commit tracking, and logbook updates without setting up an external webhook.</p>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-header">
+            <h3 class="card-title">Simulate Developer Push Event</h3>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="simAuthor">Developer Name:</label>
+              <input type="text" id="simAuthor" value="Alex Chen" class="styled-input">
+            </div>
+            <div class="form-group">
+              <label for="simMessage">Commit Message:</label>
+              <input type="text" id="simMessage" value="feat(auth): add OAuth2 refresh token rotation and session logging" class="styled-input">
+            </div>
+            <div class="form-group">
+              <label for="simAdded">Added Files (comma separated):</label>
+              <input type="text" id="simAdded" value="app/auth/tokens.py, app/auth/session.py" class="styled-input">
+            </div>
+            <div class="form-group">
+              <label for="simModified">Modified Files (comma separated):</label>
+              <input type="text" id="simModified" value="app/main.py, app/config.py" class="styled-input">
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <button id="btnSendSimulatedPush" class="btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              <span>Trigger Simulated Push</span>
+            </button>
+          </div>
+          <div id="simResult" class="sim-result-box" style="display:none;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Ingest Repository Modal -->
+  <div id="ingestModal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Ingest Repository</h3>
+        <button id="btnCloseModal" class="btn-close">&times;</button>
+      </div>
+      <form id="ingestForm">
+        <div class="form-group">
+          <label for="ingestName">Repository Name:</label>
+          <input type="text" id="ingestName" placeholder="e.g. repo-intelligence-assistant" required class="styled-input">
+        </div>
+        <div class="form-group">
+          <label for="ingestPath">GitHub URL or Local Path:</label>
+          <input type="text" id="ingestPath" placeholder="https://github.com/owner/repo OR C:/path/to/repo" required class="styled-input">
+          <span class="field-hint">Supports both public GitHub URLs (cloned automatically) or local folders.</span>
+        </div>
+        <div class="form-group">
+          <label for="ingestBranch">Git Branch (optional):</label>
+          <input type="text" id="ingestBranch" placeholder="main" class="styled-input">
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btnCancelModal" class="btn-secondary">Cancel</button>
+          <button type="submit" id="btnSubmitIngest" class="btn-primary">
+            <span>Ingest & Index</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast" style="display:none;"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
