@@ -11,6 +11,8 @@
 
 A local-first, privacy-respecting GitHub code analyzer, developer push logbook, AI release notes synthesizer, multi-format document parser, and context-aware RAG chatbot powered by **LangChain**, **ChromaDB**, and **Ollama**.
 
+> 📚 **Deep Dive**: For full architectural diagrams, dual-database schemas, and component design rationales, see the [Complete Walkthrough Document](WALKTHROUGH.md).
+
 ---
 
 ## 🌟 Key Features
